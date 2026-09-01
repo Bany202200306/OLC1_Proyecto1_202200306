@@ -1,0 +1,773 @@
+package analyzer;
+
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import model.Action;
+import model.Bonuses;
+import model.CharacterType;
+import model.MatchConfig;
+import model.ProgramModel;
+import model.Rule;
+import model.RunCommand;
+import model.Scoring;
+import model.Strategy;
+import expr.Expr;
+
+parser code {:
+
+    private ProgramModel program;
+    private final List<CompileError> errors = new ArrayList<>();
+
+    public ProgramModel getProgram() {
+        return program;
+    }
+
+    public List<CompileError> getErrors() {
+        return errors;
+    }
+
+    @Override
+    public void syntax_error(Symbol current) {
+
+        int line = current == null ? 0 : current.left + 1;
+        int column = current == null ? 0 : current.right + 1;
+
+        String value = "EOF";
+
+        if (current != null && current.value != null) {
+            value = current.value.toString();
+        }
+
+        errors.add(new CompileError(
+            "Sintáctico",
+            "Token inesperado: " + value,
+            line,
+            column
+        ));
+
+        throw new ParseAbortException();
+    }
+
+    @Override
+    public void unrecovered_syntax_error(Symbol current) throws Exception {
+        syntax_error(current);
+    }
+
+:};
+
+terminal MAGE;
+terminal WARRIOR;
+terminal MATCH;
+terminal MAIN;
+terminal RUN;
+terminal WITH;
+
+terminal INITIAL;
+terminal RULES;
+terminal IF;
+terminal THEN;
+terminal ELSE;
+
+terminal PLAYERS;
+terminal ROUNDS;
+terminal SCORING;
+terminal BONUSES;
+terminal SEED;
+
+terminal DAMAGE_POINT;
+terminal HEALING_POINT;
+terminal SUCCESSFUL_DEFENSE;
+terminal VICTORY_BONUS;
+terminal FAILED_ACTION_PENALTY;
+
+terminal MAGE_COMBO;
+terminal MAGE_COMBO_POINTS;
+terminal WARRIOR_COMBO;
+terminal WARRIOR_COMBO_POINTS;
+terminal LOW_HEALTH_VICTORY;
+
+terminal ROUND_NUMBER;
+terminal TOTAL_ROUNDS;
+terminal SELF_HEALTH;
+terminal OPPONENT_HEALTH;
+terminal SELF_RESOURCE;
+terminal OPPONENT_RESOURCE;
+terminal SELF_SCORE;
+terminal OPPONENT_SCORE;
+terminal SELF_HISTORY;
+terminal OPPONENT_HISTORY;
+terminal RANDOM;
+
+terminal GET_MOVE;
+terminal LAST_MOVE;
+terminal GET_MOVES_COUNT;
+terminal GET_LAST_N_MOVES;
+
+terminal EQ;
+terminal NEQ;
+terminal GT;
+terminal LT;
+terminal GTE;
+terminal LTE;
+terminal AND;
+terminal OR;
+terminal NOT;
+
+terminal LBRACE;
+terminal RBRACE;
+terminal LBRACKET;
+terminal RBRACKET;
+terminal LPAREN;
+terminal RPAREN;
+terminal COLON;
+terminal COMMA;
+
+terminal String ID;
+terminal Integer INT;
+terminal Double FLOAT;
+
+terminal Action ARCANE_BOLT;
+terminal Action FIREBALL;
+terminal Action MAGIC_BARRIER;
+terminal Action HEALING_RUNE;
+terminal Action MEDITATE;
+
+terminal Action SLASH;
+terminal Action HEAVY_STRIKE;
+terminal Action SHIELD_BLOCK;
+terminal Action WAR_CRY;
+terminal Action REST;
+
+non terminal ProgramModel program;
+non terminal ArrayList strategy_list;
+non terminal ArrayList match_list;
+non terminal ArrayList run_list;
+non terminal ArrayList id_list;
+non terminal ArrayList mage_rule_list;
+non terminal ArrayList warrior_rule_list;
+non terminal ArrayList mage_action_values;
+non terminal ArrayList warrior_action_values;
+non terminal ArrayList any_action_values;
+
+non terminal Strategy strategy;
+non terminal MatchConfig match_def;
+non terminal RunCommand run_def;
+non terminal Scoring scoring;
+non terminal Bonuses bonuses;
+non terminal Rule mage_rule;
+non terminal Rule warrior_rule;
+
+non terminal Action mage_action;
+non terminal Action warrior_action;
+non terminal Action any_action;
+
+non terminal Expr condition;
+non terminal Expr numeric_expr;
+non terminal Expr action_expr;
+non terminal Expr list_expr;
+non terminal Expr history_expr;
+non terminal Expr history_source;
+non terminal Expr action_list_expr;
+
+non terminal String comparison_operator;
+non terminal String equality_operator;
+
+precedence left OR;
+precedence left AND;
+precedence right NOT;
+
+start with program;
+
+program ::=
+    strategy_list:s
+    match_list:m
+    MAIN LBRACE
+    run_list:r
+    RBRACE
+    {:
+        ProgramModel result = new ProgramModel(s, m, r);
+        program = result;
+        RESULT = result;
+    :}
+;
+
+strategy_list ::=
+    strategy:s
+    {:
+        ArrayList list = new ArrayList();
+        list.add(s);
+        RESULT = list;
+    :}
+    |
+    strategy_list:l strategy:s
+    {:
+        l.add(s);
+        RESULT = l;
+    :}
+;
+
+strategy ::=
+    MAGE ID:n LBRACE
+    INITIAL COLON mage_action:i
+    RULES COLON LBRACKET
+    mage_rule_list:r
+    ELSE mage_action:d
+    RBRACKET
+    RBRACE
+    {:
+        RESULT = new Strategy(
+            n,
+            CharacterType.MAGE,
+            i,
+            r,
+            d
+        );
+    :}
+    |
+    WARRIOR ID:n LBRACE
+    INITIAL COLON warrior_action:i
+    RULES COLON LBRACKET
+    warrior_rule_list:r
+    ELSE warrior_action:d
+    RBRACKET
+    RBRACE
+    {:
+        RESULT = new Strategy(
+            n,
+            CharacterType.WARRIOR,
+            i,
+            r,
+            d
+        );
+    :}
+;
+
+mage_rule_list ::=
+    mage_rule:r COMMA
+    {:
+        ArrayList list = new ArrayList();
+        list.add(r);
+        RESULT = list;
+    :}
+    |
+    mage_rule_list:l mage_rule:r COMMA
+    {:
+        l.add(r);
+        RESULT = l;
+    :}
+;
+
+warrior_rule_list ::=
+    warrior_rule:r COMMA
+    {:
+        ArrayList list = new ArrayList();
+        list.add(r);
+        RESULT = list;
+    :}
+    |
+    warrior_rule_list:l warrior_rule:r COMMA
+    {:
+        l.add(r);
+        RESULT = l;
+    :}
+;
+
+mage_rule ::=
+    IF condition:c THEN mage_action:a
+    {:
+        RESULT = new Rule(c, a);
+    :}
+;
+
+warrior_rule ::=
+    IF condition:c THEN warrior_action:a
+    {:
+        RESULT = new Rule(c, a);
+    :}
+;
+
+match_list ::=
+    match_def:m
+    {:
+        ArrayList list = new ArrayList();
+        list.add(m);
+        RESULT = list;
+    :}
+    |
+    match_list:l match_def:m
+    {:
+        l.add(m);
+        RESULT = l;
+    :}
+;
+
+match_def ::=
+    MATCH ID:n LBRACE
+
+    PLAYERS COLON
+    LBRACKET ID:p1 COMMA ID:p2 RBRACKET
+
+    ROUNDS COLON INT:r
+
+    SCORING COLON scoring:s
+
+    BONUSES COLON bonuses:b
+
+    RBRACE
+    {:
+        RESULT = new MatchConfig(
+            n,
+            p1,
+            p2,
+            r,
+            s,
+            b
+        );
+    :}
+;
+
+scoring ::=
+    LBRACE
+
+    DAMAGE_POINT COLON INT:d COMMA
+    HEALING_POINT COLON INT:h COMMA
+    SUCCESSFUL_DEFENSE COLON INT:sd COMMA
+    VICTORY_BONUS COLON INT:v COMMA
+    FAILED_ACTION_PENALTY COLON INT:f
+
+    RBRACE
+    {:
+        RESULT = new Scoring(
+            d,
+            h,
+            sd,
+            v,
+            f
+        );
+    :}
+;
+
+bonuses ::=
+    LBRACE
+
+    MAGE_COMBO COLON
+    LBRACKET mage_action_values:mc RBRACKET
+    COMMA
+
+    MAGE_COMBO_POINTS COLON INT:mcp
+    COMMA
+
+    WARRIOR_COMBO COLON
+    LBRACKET warrior_action_values:wc RBRACKET
+    COMMA
+
+    WARRIOR_COMBO_POINTS COLON INT:wcp
+    COMMA
+
+    LOW_HEALTH_VICTORY COLON INT:lhv
+
+    RBRACE
+    {:
+        RESULT = new Bonuses(
+            mc,
+            mcp,
+            wc,
+            wcp,
+            lhv
+        );
+    :}
+;
+
+mage_action_values ::=
+    mage_action:a
+    {:
+        ArrayList list = new ArrayList();
+        list.add(a);
+        RESULT = list;
+    :}
+    |
+    mage_action_values:l COMMA mage_action:a
+    {:
+        l.add(a);
+        RESULT = l;
+    :}
+;
+
+warrior_action_values ::=
+    warrior_action:a
+    {:
+        ArrayList list = new ArrayList();
+        list.add(a);
+        RESULT = list;
+    :}
+    |
+    warrior_action_values:l COMMA warrior_action:a
+    {:
+        l.add(a);
+        RESULT = l;
+    :}
+;
+
+any_action_values ::=
+    any_action:a
+    {:
+        ArrayList list = new ArrayList();
+        list.add(a);
+        RESULT = list;
+    :}
+    |
+    any_action_values:l COMMA any_action:a
+    {:
+        l.add(a);
+        RESULT = l;
+    :}
+;
+
+run_list ::=
+    run_def:r
+    {:
+        ArrayList list = new ArrayList();
+        list.add(r);
+        RESULT = list;
+    :}
+    |
+    run_list:l run_def:r
+    {:
+        l.add(r);
+        RESULT = l;
+    :}
+;
+
+run_def ::=
+    RUN
+    LBRACKET id_list:l RBRACKET
+    WITH
+    LBRACE
+    SEED COLON INT:s
+    RBRACE
+    {:
+        RESULT = new RunCommand(l, s);
+    :}
+;
+
+id_list ::=
+    ID:i
+    {:
+        ArrayList list = new ArrayList();
+        list.add(i);
+        RESULT = list;
+    :}
+    |
+    id_list:l COMMA ID:i
+    {:
+        l.add(i);
+        RESULT = l;
+    :}
+;
+
+condition ::=
+    condition:a OR condition:b
+    {:
+        RESULT = new Expr.Binary("||", a, b);
+    :}
+    |
+    condition:a AND condition:b
+    {:
+        RESULT = new Expr.Binary("&&", a, b);
+    :}
+    |
+    NOT condition:c
+    {:
+        RESULT = new Expr.Not(c);
+    :}
+    |
+    LPAREN condition:c RPAREN
+    {:
+        RESULT = c;
+    :}
+    |
+    numeric_expr:a comparison_operator:o numeric_expr:b
+    {:
+        RESULT = new Expr.Binary(o, a, b);
+    :}
+    |
+    action_expr:a equality_operator:o action_expr:b
+    {:
+        RESULT = new Expr.Binary(o, a, b);
+    :}
+    |
+    list_expr:a equality_operator:o action_list_expr:b
+    {:
+        RESULT = new Expr.Binary(o, a, b);
+    :}
+;
+
+numeric_expr ::=
+    INT:i
+    {:
+        RESULT = new Expr.Literal(i);
+    :}
+    |
+    FLOAT:f
+    {:
+        RESULT = new Expr.Literal(f);
+    :}
+    |
+    ROUND_NUMBER
+    {:
+        RESULT = new Expr.Variable("round_number");
+    :}
+    |
+    TOTAL_ROUNDS
+    {:
+        RESULT = new Expr.Variable("total_rounds");
+    :}
+    |
+    SELF_HEALTH
+    {:
+        RESULT = new Expr.Variable("self_health");
+    :}
+    |
+    OPPONENT_HEALTH
+    {:
+        RESULT = new Expr.Variable("opponent_health");
+    :}
+    |
+    SELF_RESOURCE
+    {:
+        RESULT = new Expr.Variable("self_resource");
+    :}
+    |
+    OPPONENT_RESOURCE
+    {:
+        RESULT = new Expr.Variable("opponent_resource");
+    :}
+    |
+    SELF_SCORE
+    {:
+        RESULT = new Expr.Variable("self_score");
+    :}
+    |
+    OPPONENT_SCORE
+    {:
+        RESULT = new Expr.Variable("opponent_score");
+    :}
+    |
+    RANDOM
+    {:
+        RESULT = new Expr.Variable("random");
+    :}
+    |
+    GET_MOVES_COUNT
+    LPAREN
+    history_source:h
+    COMMA
+    any_action:a
+    RPAREN
+    {:
+        RESULT = new Expr.Function(
+            "get_moves_count",
+            Arrays.asList(
+                h,
+                new Expr.Literal(a)
+            )
+        );
+    :}
+;
+
+history_expr ::=
+    SELF_HISTORY
+    {:
+        RESULT = new Expr.Variable("self_history");
+    :}
+    |
+    OPPONENT_HISTORY
+    {:
+        RESULT = new Expr.Variable("opponent_history");
+    :}
+;
+
+history_source ::=
+    history_expr:h
+    {:
+        RESULT = h;
+    :}
+    |
+    list_expr:l
+    {:
+        RESULT = l;
+    :}
+;
+
+action_expr ::=
+    any_action:a
+    {:
+        RESULT = new Expr.Literal(a);
+    :}
+    |
+    GET_MOVE
+    LPAREN
+    history_expr:h
+    COMMA
+    INT:i
+    RPAREN
+    {:
+        RESULT = new Expr.Function(
+            "get_move",
+            Arrays.asList(
+                h,
+                new Expr.Literal(i)
+            )
+        );
+    :}
+    |
+    LAST_MOVE
+    LPAREN
+    history_expr:h
+    RPAREN
+    {:
+        RESULT = new Expr.Function(
+            "last_move",
+            Arrays.asList(h)
+        );
+    :}
+;
+
+list_expr ::=
+    GET_LAST_N_MOVES
+    LPAREN
+    history_expr:h
+    COMMA
+    INT:i
+    RPAREN
+    {:
+        RESULT = new Expr.Function(
+            "get_last_n_moves",
+            Arrays.asList(
+                h,
+                new Expr.Literal(i)
+            )
+        );
+    :}
+;
+
+action_list_expr ::=
+    LBRACKET
+    any_action_values:l
+    RBRACKET
+    {:
+        RESULT = new Expr.Literal(l);
+    :}
+;
+
+comparison_operator ::=
+    EQ
+    {:
+        RESULT = "==";
+    :}
+    |
+    NEQ
+    {:
+        RESULT = "!=";
+    :}
+    |
+    GT
+    {:
+        RESULT = ">";
+    :}
+    |
+    LT
+    {:
+        RESULT = "<";
+    :}
+    |
+    GTE
+    {:
+        RESULT = ">=";
+    :}
+    |
+    LTE
+    {:
+        RESULT = "<=";
+    :}
+;
+
+equality_operator ::=
+    EQ
+    {:
+        RESULT = "==";
+    :}
+    |
+    NEQ
+    {:
+        RESULT = "!=";
+    :}
+;
+
+mage_action ::=
+    ARCANE_BOLT:a
+    {:
+        RESULT = a;
+    :}
+    |
+    FIREBALL:a
+    {:
+        RESULT = a;
+    :}
+    |
+    MAGIC_BARRIER:a
+    {:
+        RESULT = a;
+    :}
+    |
+    HEALING_RUNE:a
+    {:
+        RESULT = a;
+    :}
+    |
+    MEDITATE:a
+    {:
+        RESULT = a;
+    :}
+;
+
+warrior_action ::=
+    SLASH:a
+    {:
+        RESULT = a;
+    :}
+    |
+    HEAVY_STRIKE:a
+    {:
+        RESULT = a;
+    :}
+    |
+    SHIELD_BLOCK:a
+    {:
+        RESULT = a;
+    :}
+    |
+    WAR_CRY:a
+    {:
+        RESULT = a;
+    :}
+    |
+    REST:a
+    {:
+        RESULT = a;
+    :}
+;
+
+any_action ::=
+    mage_action:a
+    {:
+        RESULT = a;
+    :}
+    |
+    warrior_action:a
+    {:
+        RESULT = a;
+    :}
+;

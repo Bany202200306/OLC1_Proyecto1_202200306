@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/battlescript/Main.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/Tokeninfo.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/CompileError.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/LexicalException.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/ParseAbortException.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/CharacterType.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/Action.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/expr/EvalContext.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/engine/BattleScriptExecutionException.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/expr/Expre.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/Rule.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/Strategy.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/Score.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/Bonus.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/MatchConfig.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/RunCommand.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/model/ProgramModel.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/engine/BattleEngine.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/Lexer.flex</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/Parser.cup</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/generar.bat</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/analyzer/Lexer.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/service/CompilerService.java</file>
+            <file>file:/C:/Users/baqzc/OneDrive/Escritorio/OLC1%202026/OLC1_Proyecto1_202200306/src/ui/MainFrame.java</file>
+        </group>
+    </open-files>
+</project-private>
