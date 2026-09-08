@@ -10,15 +10,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import model.Action;
-import model.Bonuses;
+import model.Bonus;
 import model.CharacterType;
 import model.MatchConfig;
 import model.ProgramModel;
 import model.Rule;
 import model.RunCommand;
-import model.Scoring;
+import model.Score;
 import model.Strategy;
-import expr.Expr;
+import expr.Expre;
 import java_cup.runtime.XMLElement;
 
 /** CUP v0.11b 20160615 (GIT 4ac7450) generated parser.
