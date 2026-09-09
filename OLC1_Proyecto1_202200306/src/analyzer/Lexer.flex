@@ -17,7 +17,7 @@ import model.Action;
 
 %{
 
-private final List<TokenInfo> tokens = new ArrayList<>();
+private final List<Tokeninfo> tokens = new ArrayList<>();
 private final List<CompileError> errors = new ArrayList<>();
 
 private int commentLine;

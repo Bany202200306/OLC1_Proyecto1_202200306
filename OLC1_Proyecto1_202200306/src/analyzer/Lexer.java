@@ -722,13 +722,13 @@ public class Lexer implements java_cup.runtime.Scanner {
 
   /* user code: */
 
-private final List<TokenInfo> tokens = new ArrayList<>();
+private final List<Tokeninfo> tokens = new ArrayList<>();
 private final List<CompileError> errors = new ArrayList<>();
 
 private int commentLine;
 private int commentColumn;
 
-public List<TokenInfo> getTokens() {
+public List<Tokeninfo> getTokens() {
     return tokens;
 }
 
@@ -739,7 +739,7 @@ public List<CompileError> getErrors() {
 private Symbol token(int id, String type) {
     String lexeme = yytext();
 
-    tokens.add(new TokenInfo(
+    tokens.add(new Tokeninfo(
         tokens.size() + 1,
         lexeme,
         type,
@@ -758,7 +758,7 @@ private Symbol token(int id, String type) {
 private Symbol token(int id, String type, Object value) {
     String lexeme = yytext();
 
-    tokens.add(new TokenInfo(
+    tokens.add(new Tokeninfo(
         tokens.size() + 1,
         lexeme,
         type,
