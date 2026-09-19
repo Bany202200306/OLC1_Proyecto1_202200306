@@ -1,0 +1,119 @@
+/* =======================================================
+   PROYECTO 1 - BATTLESCRIPT
+   Archivo de Calificación: Nivel Fácil (Básico)
+   =======================================================
+
+*/
+
+// --- ESTRATEGIA: Mago Arcano (Merlin) ---
+mage Merlin {
+  initial: ARCANE_BOLT
+
+  rules: [
+    if self_resource <= 15 then MEDITATE,
+    if self_health <= 35 && self_resource >= 30 then HEALING_RUNE,
+    if opponent_health <= 30 && self_resource >= 30 then FIREBALL,
+    if round_number >= 3 && self_resource >= 30 then FIREBALL,
+    else ARCANE_BOLT
+  ]
+}
+
+// --- ESTRATEGIA: Guerrero Furia (Ragnar) ---
+warrior Ragnar {
+  initial: SLASH
+
+  rules: [
+    if self_resource <= 20 then REST,
+    if self_health <= 40 && self_resource >= 15 then SHIELD_BLOCK,
+    if opponent_health <= 40 && self_resource >= 25 then HEAVY_STRIKE,
+    if round_number >= 2 && self_resource >= 20 then WAR_CRY,
+    else SLASH
+  ]
+}
+
+/* --- ESTRATEGIA: Mago de Fuego (Gandalf) --- */
+mage Gandalf {
+  initial: FIREBALL
+
+  rules: [
+    if self_resource < 30 then MEDITATE,
+    if self_health < 40 && self_resource >= 30 then HEALING_RUNE,
+    if opponent_health < 50 && self_resource >= 30 then FIREBALL,
+    else ARCANE_BOLT
+  ]
+}
+
+/* --- ESTRATEGIA: Guerrero Defensivo (Thor) --- */
+warrior Thor {
+  initial: WAR_CRY
+
+  rules: [
+    if self_resource < 20 then REST,
+    if self_health <= 50 && self_resource >= 15 then SHIELD_BLOCK,
+    if self_resource >= 35 then HEAVY_STRIKE,
+    else SLASH
+  ]
+}
+
+// =======================================================
+// DEFINICIÓN DE PARTIDAS (Sin bloque bonuses)
+// =======================================================
+
+// Partida 1: Mago vs Guerrero
+match PartidaFacil1 {
+  players: [Merlin, Ragnar]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+}
+
+// Partida 2: Mago vs Mago
+match PartidaFacil2 {
+  players: [Merlin, Gandalf]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 15,
+    victory_bonus: 80,
+    failed_action_penalty: 5
+  }
+}
+
+// Partida 3: Guerrero vs Guerrero
+match PartidaFacil3 {
+  players: [Ragnar, Thor]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+}
+
+// =======================================================
+// PUNTO DE ENTRADA: 3 bloques 'run' independientes
+// =======================================================
+main {
+  run [PartidaFacil1] with {
+    seed: 42
+  }
+
+  run [PartidaFacil2] with {
+    seed: 77
+  }
+
+  run [PartidaFacil3] with {
+    seed: 123
+  }
+}

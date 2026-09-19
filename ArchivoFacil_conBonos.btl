@@ -1,0 +1,143 @@
+/* =======================================================
+   PROYECTO 1 - BATTLESCRIPT
+   Archivo de Calificación: Nivel Fácil (Con Bonos)
+   =======================================================
+
+*/
+
+// --- ESTRATEGIA: Mago Ilusionista (Elminster) ---
+mage Elminster {
+  initial: ARCANE_BOLT
+
+  rules: [
+    if self_resource <= 20 then MEDITATE,
+    if self_health <= 35 && self_resource >= 30 then HEALING_RUNE,
+    if round_number == 1 && self_resource >= 20 then MAGIC_BARRIER,
+    if opponent_health <= 40 && self_resource >= 30 then FIREBALL,
+    else ARCANE_BOLT
+  ]
+}
+
+// --- ESTRATEGIA: Guerrero Gladiador (Spartacus) ---
+warrior Spartacus {
+  initial: SLASH
+
+  rules: [
+    if self_resource <= 15 then REST,
+    if self_health <= 45 && self_resource >= 15 then SHIELD_BLOCK,
+    if round_number == 1 && self_resource >= 20 then WAR_CRY,
+    if opponent_health <= 40 && self_resource >= 25 then HEAVY_STRIKE,
+    else SLASH
+  ]
+}
+
+/* --- ESTRATEGIA: Maga Encantadora (Morgana) --- */
+mage Morgana {
+  initial: FIREBALL
+
+  rules: [
+    if self_resource < 25 then MEDITATE,
+    if self_health <= 30 && self_resource >= 30 then HEALING_RUNE,
+    if round_number >= 2 && self_resource >= 30 then FIREBALL,
+    else ARCANE_BOLT
+  ]
+}
+
+/* --- ESTRATEGIA: Guerrero Paladín (Arthur) --- */
+warrior Arthur {
+  initial: WAR_CRY
+
+  rules: [
+    if self_resource < 20 then REST,
+    if self_health <= 40 && self_resource >= 15 then SHIELD_BLOCK,
+    if round_number >= 2 && self_resource >= 25 then HEAVY_STRIKE,
+    else SLASH
+  ]
+}
+
+// =======================================================
+// DEFINICIÓN DE PARTIDAS CON BONOS EXPLÍCITOS
+// =======================================================
+
+// Partida 1: Mago vs Guerrero
+match DueloFacilBonos1 {
+  players: [Elminster, Spartacus]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 30,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 35,
+    low_health_victory: 25
+  }
+}
+
+// Partida 2: Mago vs Mago
+match DueloFacilBonos2 {
+  players: [Elminster, Morgana]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 15,
+    victory_bonus: 80,
+    failed_action_penalty: 5
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 25,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 30,
+    low_health_victory: 20
+  }
+}
+
+// Partida 3: Guerrero vs Guerrero
+match DueloFacilBonos3 {
+  players: [Spartacus, Arthur]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 30,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 35,
+    low_health_victory: 25
+  }
+}
+
+// =======================================================
+// PUNTO DE ENTRADA: 3 ejecuciones independientes
+// =======================================================
+main {
+  run [DueloFacilBonos1] with {
+    seed: 50
+  }
+
+  run [DueloFacilBonos2] with {
+    seed: 150
+  }
+
+  run [DueloFacilBonos3] with {
+    seed: 250
+  }
+}

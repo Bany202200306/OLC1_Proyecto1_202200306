@@ -46,7 +46,7 @@ public class EvalContext {
             case "total_rounds":
                 return totalRounds;
                 
-            case "self health":
+            case "self_health":
                 return selfHealth;
                 
             case "opponent_health":
@@ -74,7 +74,7 @@ public class EvalContext {
                 return random;
                 
             default:
-                throw new RuntimeException("No se reconocio la variable :D" + name);
+                throw new RuntimeException("No se reconocio la variable :D " + name);
         }
     }
     

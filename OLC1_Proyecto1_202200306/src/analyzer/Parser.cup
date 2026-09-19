@@ -14,6 +14,8 @@ import model.RunCommand;
 import model.Scoring;
 import model.Strategy;
 import expr.Expr;
+import java.util.Hashset;
+import java.util.Set;
 
 parser code {:
 
@@ -54,6 +56,219 @@ parser code {:
     public void unrecovered_syntax_error(Symbol current) throws Exception {
         syntax_error(current);
     }
+
+private void validationError(
+        String description,
+        int line,
+        int column
+) {
+
+    errors.add(
+        new CompileError(
+            "Sintáctico",
+            description,
+            line,
+            column
+        )
+    );
+
+    throw new ParseAbortException();
+}
+
+private Scoring buildScoring(
+        ArrayList entries,
+        int line,
+        int column
+) {
+
+    Set<String> seen =
+            new HashSet<>();
+
+    Integer damagePoint = null;
+    Integer healingPoint = null;
+    Integer successfulDefense = null;
+    Integer victoryBonus = null;
+    Integer failedActionPenalty = null;
+
+    for (Object object : entries) {
+
+        PropertyEntry entry =
+                (PropertyEntry) object;
+
+        if (!seen.add(entry.getName())) {
+
+            validationError(
+                "La propiedad '"
+                + entry.getName()
+                + "' aparece más de una vez en scoring.",
+                entry.getLine(),
+                entry.getColumn()
+            );
+        }
+
+        switch (entry.getName()) {
+
+            case "damage_point":
+                damagePoint =
+                        (Integer) entry.getValue();
+                break;
+
+            case "healing_point":
+                healingPoint =
+                        (Integer) entry.getValue();
+                break;
+
+            case "successful_defense":
+                successfulDefense =
+                        (Integer) entry.getValue();
+                break;
+
+            case "victory_bonus":
+                victoryBonus =
+                        (Integer) entry.getValue();
+                break;
+
+            case "failed_action_penalty":
+                failedActionPenalty =
+                        (Integer) entry.getValue();
+                break;
+
+            default:
+
+                validationError(
+                    "Propiedad no permitida en scoring: "
+                    + entry.getName(),
+                    entry.getLine(),
+                    entry.getColumn()
+                );
+        }
+    }
+
+    if (damagePoint == null
+            || healingPoint == null
+            || successfulDefense == null
+            || victoryBonus == null
+            || failedActionPenalty == null) {
+
+        validationError(
+            "scoring debe contener exactamente una vez: "
+            + "damage_point, healing_point, "
+            + "successful_defense, victory_bonus y "
+            + "failed_action_penalty.",
+            line,
+            column
+        );
+    }
+
+    return new Scoring(
+        damagePoint,
+        healingPoint,
+        successfulDefense,
+        victoryBonus,
+        failedActionPenalty
+    );
+}
+
+private Bonuses buildBonuses(
+        ArrayList entries,
+        int line,
+        int column
+) {
+
+    Set<String> seen =
+            new HashSet<>();
+
+    List<Action> mageCombo = null;
+    Integer mageComboPoints = null;
+
+    List<Action> warriorCombo = null;
+    Integer warriorComboPoints = null;
+
+    Integer lowHealthVictory = null;
+
+    for (Object object : entries) {
+
+        PropertyEntry entry =
+                (PropertyEntry) object;
+
+        if (!seen.add(entry.getName())) {
+
+            validationError(
+                "La propiedad '"
+                + entry.getName()
+                + "' aparece más de una vez en bonuses.",
+                entry.getLine(),
+                entry.getColumn()
+            );
+        }
+
+        switch (entry.getName()) {
+
+            case "mage_combo":
+                mageCombo =
+                    (List<Action>)
+                    entry.getValue();
+                break;
+
+            case "mage_combo_points":
+                mageComboPoints =
+                    (Integer)
+                    entry.getValue();
+                break;
+
+            case "warrior_combo":
+                warriorCombo =
+                    (List<Action>)
+                    entry.getValue();
+                break;
+
+            case "warrior_combo_points":
+                warriorComboPoints =
+                    (Integer)
+                    entry.getValue();
+                break;
+
+            case "low_health_victory":
+                lowHealthVictory =
+                    (Integer)
+                    entry.getValue();
+                break;
+
+            default:
+
+                validationError(
+                    "Propiedad no permitida en bonuses: "
+                    + entry.getName(),
+                    entry.getLine(),
+                    entry.getColumn()
+                );
+        }
+    }
+
+    if (mageCombo == null
+            || mageComboPoints == null
+            || warriorCombo == null
+            || warriorComboPoints == null
+            || lowHealthVictory == null) {
+
+        validationError(
+            "bonuses debe contener exactamente una vez: "
+            + "mage_combo, mage_combo_points, "
+            + "warrior_combo, warrior_combo_points y "
+            + "low_health_victory.",
+            line,
+            column
+        );
+    }
+
+    return new Bonuses(
+        mageCombo,
+        mageComboPoints,
+        warriorCombo,
+        warriorComboPoints,
+        lowHealthVictory
+    );
+}
 
 :};
 
@@ -150,6 +365,10 @@ non terminal ArrayList warrior_rule_list;
 non terminal ArrayList mage_action_values;
 non terminal ArrayList warrior_action_values;
 non terminal ArrayList any_action_values;
+non terminal ArrayList scoring_properties;
+non terminal ArrayList bonus_properties;
+non terminal PropertyEntry scoring_property;
+non terminal PropertyEntry bonus_property;
 
 non terminal Strategy strategy;
 non terminal MatchConfig match_def;
@@ -245,14 +464,15 @@ strategy ::=
 ;
 
 mage_rule_list ::=
-    mage_rule:r COMMA
+    /* vacío */
     {:
-        ArrayList list = new ArrayList();
-        list.add(r);
-        RESULT = list;
+        RESULT =
+            new ArrayList();
     :}
     |
-    mage_rule_list:l mage_rule:r COMMA
+    mage_rule_list:l
+    mage_rule:r
+    COMMA
     {:
         l.add(r);
         RESULT = l;
@@ -260,14 +480,15 @@ mage_rule_list ::=
 ;
 
 warrior_rule_list ::=
-    warrior_rule:r COMMA
+     /* vacío */
     {:
-        ArrayList list = new ArrayList();
-        list.add(r);
-        RESULT = list;
+        RESULT =
+            new ArrayList();
     :}
     |
-    warrior_rule_list:l warrior_rule:r COMMA
+    warrior_rule_list:l
+    warrior_rule:r
+    COMMA
     {:
         l.add(r);
         RESULT = l;
@@ -329,54 +550,193 @@ match_def ::=
 ;
 
 scoring ::=
-    LBRACE
-
-    DAMAGE_POINT COLON INT:d COMMA
-    HEALING_POINT COLON INT:h COMMA
-    SUCCESSFUL_DEFENSE COLON INT:sd COMMA
-    VICTORY_BONUS COLON INT:v COMMA
-    FAILED_ACTION_PENALTY COLON INT:f
-
-    RBRACE
+     LBRACE scoring_properties:p RBRACE:r
     {:
-        RESULT = new Scoring(
-            d,
-            h,
-            sd,
-            v,
-            f
-        );
+        RESULT =
+            buildScoring(
+                p,
+                rleft + 1,
+                rright + 1
+            );
+    :}
+;
+
+scoring_properties ::=
+    scoring_property:p
+    {:
+        ArrayList list =
+            new ArrayList();
+
+        list.add(p);
+
+        RESULT = list;
+    :}
+    |
+    scoring_properties:l
+    COMMA
+    scoring_property:p
+    {:
+        l.add(p);
+
+        RESULT = l;
+    :}
+;
+
+scoring_property ::=
+    DAMAGE_POINT:k COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "damage_point",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    HEALING_POINT:k COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "healing_point",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    SUCCESSFUL_DEFENSE:k COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "successful_defense",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    VICTORY_BONUS:k COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "victory_bonus",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    FAILED_ACTION_PENALTY:k COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "failed_action_penalty",
+                v,
+                kleft + 1,
+                kright + 1
+            );
     :}
 ;
 
 bonuses ::=
-    LBRACE
-
-    MAGE_COMBO COLON
-    LBRACKET mage_action_values:mc RBRACKET
-    COMMA
-
-    MAGE_COMBO_POINTS COLON INT:mcp
-    COMMA
-
-    WARRIOR_COMBO COLON
-    LBRACKET warrior_action_values:wc RBRACKET
-    COMMA
-
-    WARRIOR_COMBO_POINTS COLON INT:wcp
-    COMMA
-
-    LOW_HEALTH_VICTORY COLON INT:lhv
-
-    RBRACE
+    LBRACE bonus_properties:p RBRACE:r
     {:
-        RESULT = new Bonuses(
-            mc,
-            mcp,
-            wc,
-            wcp,
-            lhv
-        );
+        RESULT =
+            buildBonuses(
+                p,
+                rleft + 1,
+                rright + 1
+            );
+    :}
+;
+
+bonus_properties ::=
+    bonus_property:p
+    {:
+        ArrayList list =
+            new ArrayList();
+
+        list.add(p);
+
+        RESULT = list;
+    :}
+    |
+    bonus_properties:l
+    COMMA
+    bonus_property:p
+    {:
+        l.add(p);
+
+        RESULT = l;
+    :}
+;
+
+bonus_property ::=
+    MAGE_COMBO:k
+    COLON
+    LBRACKET
+    mage_action_values:v
+    RBRACKET
+    {:
+        RESULT =
+            new PropertyEntry(
+                "mage_combo",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    MAGE_COMBO_POINTS:k
+    COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "mage_combo_points",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    WARRIOR_COMBO:k
+    COLON
+    LBRACKET
+    warrior_action_values:v
+    RBRACKET
+    {:
+        RESULT =
+            new PropertyEntry(
+                "warrior_combo",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    WARRIOR_COMBO_POINTS:k
+    COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "warrior_combo_points",
+                v,
+                kleft + 1,
+                kright + 1
+            );
+    :}
+    |
+    LOW_HEALTH_VICTORY:k
+    COLON INT:v
+    {:
+        RESULT =
+            new PropertyEntry(
+                "low_health_victory",
+                v,
+                kleft + 1,
+                kright + 1
+            );
     :}
 ;
 

@@ -1,0 +1,197 @@
+/* =======================================================
+   PROYECTO 1 - BATTLESCRIPT
+   Archivo de Calificación: Nivel Avanzado (Difícil)
+   =======================================================
+
+*/
+
+// --- ESTRATEGIA: Mago Supremo (Albus) ---
+mage Albus {
+  initial: ARCANE_BOLT
+
+  rules: [
+    if self_health <= 30 && self_resource >= 30 then HEALING_RUNE,
+
+    // Corto circuito y función anidada: cuenta cuántos HEAVY_STRIKE ha usado el rival en sus últimos 3 movimientos
+    if round_number >= 3 && get_moves_count(get_last_n_moves(opponent_history, 3), HEAVY_STRIKE) >= 2 && self_resource >= 20 then MAGIC_BARRIER,
+
+    // Corto circuito y consulta de último movimiento
+    if round_number >= 1 && last_move(opponent_history) == FIREBALL && self_resource >= 20 then MAGIC_BARRIER,
+
+    // Comparación directa de secuencia de movimientos con lista [ ... ]
+    if round_number >= 3 && get_last_n_moves(self_history, 3) == [ARCANE_BOLT, ARCANE_BOLT, FIREBALL] && self_health <= 60 && self_resource >= 30 then HEALING_RUNE,
+
+    // Remate con Fireball si el rival tiene poca vida o tenemos ventaja de recursos
+    if (opponent_health <= 45 || opponent_resource <= 15) && self_resource >= 30 then FIREBALL,
+
+    // Gestión de maná
+    if self_resource <= 20 then MEDITATE,
+
+    else ARCANE_BOLT
+  ]
+}
+
+// --- ESTRATEGIA: Guerrero Espartano (Leonidas) ---
+warrior Leonidas {
+  initial: SLASH
+
+  rules: [
+    if self_resource <= 15 then REST,
+
+    // Corto circuito y consulta a una posición específica del historial (ronda inicial 0)
+    if round_number >= 1 && get_move(opponent_history, 0) != MEDITATE && self_health <= 50 && self_resource >= 15 then SHIELD_BLOCK,
+
+    // Conteo total de una habilidad en todo el historial del oponente
+    if get_moves_count(opponent_history, FIREBALL) >= 2 && self_resource >= 15 then SHIELD_BLOCK,
+
+    // Potenciación con War Cry si el rival no está descansando
+    if self_resource >= 40 && round_number >= 1 && !(last_move(opponent_history) == REST) then WAR_CRY,
+
+    // Golpe pesado si tenemos recurso suficiente
+    if self_resource >= 25 then HEAVY_STRIKE,
+
+    else SLASH
+  ]
+}
+
+/* --- ESTRATEGIA: Mago Nigromante (Saruman) --- */
+mage Saruman {
+  initial: MAGIC_BARRIER
+
+  rules: [
+    if self_resource <= 25 then MEDITATE,
+
+    // Reacciona si el oponente usó War Cry en el turno anterior
+    if round_number >= 1 && last_move(opponent_history) == WAR_CRY && self_resource >= 20 then MAGIC_BARRIER,
+
+    // Detección de racha de ataques del rival mediante función anidada
+    if round_number >= 3 && get_moves_count(get_last_n_moves(opponent_history, 3), SLASH) >= 2 && self_resource >= 20 then MAGIC_BARRIER,
+
+    if opponent_health <= 50 && self_resource >= 30 then FIREBALL,
+
+    else ARCANE_BOLT
+  ]
+}
+
+/* --- ESTRATEGIA: Guerrero Bárbaro (Beowulf) --- */
+warrior Beowulf {
+  initial: WAR_CRY
+
+  rules: [
+    if self_health <= 35 && self_resource >= 15 then SHIELD_BLOCK,
+
+    // Comparación de secuencia propia para activar escudo defensivo tras combo
+    if round_number >= 3 && get_last_n_moves(self_history, 3) == [SLASH, SLASH, HEAVY_STRIKE] && self_health <= 60 && self_resource >= 15 then SHIELD_BLOCK,
+
+    if self_resource >= 30 || opponent_health <= 35 then HEAVY_STRIKE,
+
+    if self_resource <= 20 then REST,
+
+    else SLASH
+  ]
+}
+
+// =======================================================
+// DEFINICIÓN DE PARTIDAS
+// =======================================================
+
+// 1. Mago vs Guerrero
+match PartidaDificil1 {
+  players: [Albus, Leonidas]
+  rounds: 8
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 35,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 40,
+    low_health_victory: 25
+  }
+}
+
+// 2. Mago vs Mago
+match PartidaDificil2 {
+  players: [Albus, Saruman]
+  rounds: 8
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 35,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 40,
+    low_health_victory: 25
+  }
+}
+
+// 3. Guerrero vs Guerrero
+match PartidaDificil3 {
+  players: [Leonidas, Beowulf]
+  rounds: 7
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 15,
+    victory_bonus: 90,
+    failed_action_penalty: 8
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 30,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 35,
+    low_health_victory: 20
+  }
+}
+
+// 4. Mago vs Guerrero (Partida Independiente en Segundo Run)
+match PartidaDificil4 {
+  players: [Saruman, Beowulf]
+  rounds: 10
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 25,
+    victory_bonus: 120,
+    failed_action_penalty: 12
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 40,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 45,
+    low_health_victory: 30
+  }
+}
+
+// =======================================================
+// PUNTO DE ENTRADA: 2 bloques 'run' (3 en el primero, 1 en el segundo)
+// =======================================================
+main {
+  run [PartidaDificil1, PartidaDificil2, PartidaDificil3] with {
+    seed: 100
+  }
+
+  run [PartidaDificil4] with {
+    seed: 200
+  }
+}

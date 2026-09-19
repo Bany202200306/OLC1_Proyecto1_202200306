@@ -1,0 +1,148 @@
+/* =======================================================
+   PROYECTO 1 - BATTLESCRIPT
+   Archivo de Calificación: Nivel Intermedio (Medio)
+   =======================================================
+
+*/
+
+// --- ESTRATEGIA: Maga Táctica (Morgana) ---
+mage Morgana {
+  initial: ARCANE_BOLT
+
+  rules: [
+    // Condición combinada con ! y &&
+    if self_resource <= 25 && !(opponent_health <= 20) then MEDITATE,
+    // Condición combinada con || y paréntesis para priorizar curación crítica
+    if (self_health <= 35 || self_score < opponent_score) && self_resource >= 30 then HEALING_RUNE,
+    // Remate en rondas avanzadas si se dispone de maná
+    if round_number >= 3 && self_resource >= 30 then FIREBALL,
+    // Uso de random con umbral probabilístico
+    if random < 0.40 && self_resource >= 20 then MAGIC_BARRIER,
+    // Ataque potente si el rival está debilitado o tenemos ventaja de puntuación
+    if (opponent_health <= 50 || self_score >= 100) && self_resource >= 30 then FIREBALL,
+    else ARCANE_BOLT
+  ]
+}
+
+// --- ESTRATEGIA: Guerrero Gladiador (Hector) ---
+warrior Hector {
+  initial: SLASH
+
+  rules: [
+    // Descanso estratégico si el recurso es crítico
+    if self_resource <= 15 then REST,
+    // Bloqueo condicional si la vida propia es baja o el rival tiene mucha vida
+    if (self_health <= 40 || opponent_health >= 80) && self_resource >= 15 then SHIELD_BLOCK,
+    // Activación de War Cry si el rival no está descansando y tenemos recurso
+    if self_resource >= 35 && !(opponent_resource <= 10) then WAR_CRY,
+    // Golpe pesado probabilístico o si el rival está a punto de caer
+    if (opponent_health <= 35 || random >= 0.30) && self_resource >= 25 then HEAVY_STRIKE,
+    else SLASH
+  ]
+}
+
+/* --- ESTRATEGIA: Hechicera Arcana (Circe) --- */
+mage Circe {
+  initial: MAGIC_BARRIER
+
+  rules: [
+    if self_resource <= 20 then MEDITATE,
+    // Agrupación compleja: evalúa ronda, vida y random
+    if (round_number >= 2 && (opponent_health <= 60 || random < 0.50)) && self_resource >= 30 then FIREBALL,
+    if self_health <= 45 && self_resource >= 30 then HEALING_RUNE,
+    if random < 0.30 && self_resource >= 20 then MAGIC_BARRIER,
+    else ARCANE_BOLT
+  ]
+}
+
+/* --- ESTRATEGIA: Guerrero Fénix (Achilles) --- */
+warrior Achilles {
+  initial: WAR_CRY
+
+  rules: [
+    if self_resource <= 20 then REST,
+    if (self_health <= 50 && opponent_resource >= 25) && self_resource >= 15 then SHIELD_BLOCK,
+    if (self_resource >= 40 || opponent_health <= 40) && self_resource >= 25 then HEAVY_STRIKE,
+    if random < 0.25 && self_resource >= 20 then WAR_CRY,
+    else SLASH
+  ]
+}
+
+// =======================================================
+// DEFINICIÓN DE PARTIDAS
+// =======================================================
+
+// 1. Mago vs Guerrero
+match PartidaMedio1 {
+  players: [Morgana, Hector]
+  rounds: 7
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 35,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 40,
+    low_health_victory: 25
+  }
+}
+
+// 2. Mago vs Mago
+match PartidaMedio2 {
+  players: [Morgana, Circe]
+  rounds: 6
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 15,
+    victory_bonus: 90,
+    failed_action_penalty: 8
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 30,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 35,
+    low_health_victory: 20
+  }
+}
+
+// 3. Guerrero vs Guerrero
+match PartidaMedio3 {
+  players: [Hector, Achilles]
+  rounds: 7
+
+  scoring: {
+    damage_point: 1,
+    healing_point: 1,
+    successful_defense: 20,
+    victory_bonus: 100,
+    failed_action_penalty: 10
+  }
+
+  bonuses: {
+    mage_combo: [ARCANE_BOLT, ARCANE_BOLT, FIREBALL],
+    mage_combo_points: 35,
+    warrior_combo: [SLASH, SLASH, HEAVY_STRIKE],
+    warrior_combo_points: 40,
+    low_health_victory: 30
+  }
+}
+
+// =======================================================
+// PUNTO DE ENTRADA: 3 partidas en UN SOLO 'run'
+// =======================================================
+main {
+  run [PartidaMedio1, PartidaMedio2, PartidaMedio3] with {
+    seed: 88
+  }
+}
